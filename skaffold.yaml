@@ -1,0 +1,34 @@
+apiVersion: skaffold/v3
+kind: Config
+build:
+  artifacts:
+    - image: demo
+      context: ./app
+manifests:
+  rawYaml:
+    - minikube/demo.yaml
+profiles:
+  - name: cloudrun
+    build:
+      tagPolicy:
+        dateTime:
+          timezone: "Local"
+      artifacts:
+        - image: demo
+          context: ./app
+          docker:
+            cacheFrom:
+            # googleCloudBuild replaces cache references to the artifact image with
+            # the tagged image reference, useful for caching from the previous build.
+            - demo
+            - golang:1.19
+            - alpine:3
+      googleCloudBuild:
+        projectId: serverless-gdg
+    deploy:
+      cloudrun:
+        projectid: serverless-gdg
+        region: europe-west3
+    manifests:
+      rawYaml:
+        - cloudrun/demo.yaml
